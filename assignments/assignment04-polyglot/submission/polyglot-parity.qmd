@@ -1,0 +1,120 @@
+---
+title: "Assignment 4: Polyglot Parity"
+format: html
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Question and parity rules
+
+How do mean BMI, sample standard deviation, and the number of observations vary by income group and gender among adults aged 20–80? Both languages use the same cached CSV, remove rows missing BMI or either grouping variable, restrict age to 20–80 inclusive, calculate sample SD, and round mean and SD to one decimal place.
+
+## Load and inspect
+
+```{r}
+library(tidyverse)
+
+nhanes <- read_csv(
+  "examples/nhanes-equity/data/nhanes_equity_v6.csv",
+  show_col_types = FALSE
+)
+
+raw_check <- tibble(
+  rows = nrow(nhanes),
+  columns = ncol(nhanes),
+  missing_bmi = sum(is.na(nhanes$BMI))
+)
+raw_check
+```
+
+## R pipeline
+
+```{r}
+bmi_by_group_pipeline <- nhanes |>
+  filter(
+    !is.na(BMI),
+    !is.na(IncomeGroup),
+    !is.na(Gender),
+    Age >= 20,
+    Age <= 80
+  ) |>
+  group_by(IncomeGroup, Gender) |>
+  summarise(
+    n = n(),
+    mean_bmi = mean(BMI),
+    sd_bmi = sd(BMI),
+    .groups = "drop"
+  ) |>
+  mutate(
+    mean_bmi = round(mean_bmi, 1),
+    sd_bmi = round(sd_bmi, 1)
+  )
+
+bmi_by_group_pipeline
+```
+
+## Reusable R function
+
+The function accepts a data frame and inclusive age bounds, so the same summary can be reused without copying the filtering and grouping logic.
+
+```{r}
+summarize_bmi_by_group <- function(data, age_min = 20, age_max = 80) {
+  data |>
+    filter(
+      !is.na(BMI),
+      !is.na(IncomeGroup),
+      !is.na(Gender),
+      Age >= age_min,
+      Age <= age_max
+    ) |>
+    group_by(IncomeGroup, Gender) |>
+    summarise(
+      n = n(),
+      mean_bmi = mean(BMI),
+      sd_bmi = sd(BMI),
+      .groups = "drop"
+    ) |>
+    mutate(
+      mean_bmi = round(mean_bmi, 1),
+      sd_bmi = round(sd_bmi, 1)
+    )
+}
+
+bmi_by_group_function <- summarize_bmi_by_group(nhanes)
+stopifnot(identical(bmi_by_group_pipeline, bmi_by_group_function))
+bmi_by_group_function
+```
+
+## Parity checks
+
+```{r}
+filtered_rows <- nhanes |>
+  filter(
+    !is.na(BMI),
+    !is.na(IncomeGroup),
+    !is.na(Gender),
+    Age >= 20,
+    Age <= 80
+  ) |>
+  nrow()
+
+parity_metrics <- tibble(
+  metric = c("raw_row_count", "raw_column_count", "missing_BMI", "filtered_row_count", "number_of_groups"),
+  r_value = c(nrow(nhanes), ncol(nhanes), sum(is.na(nhanes$BMI)), filtered_rows, nrow(bmi_by_group_pipeline))
+)
+parity_metrics
+
+parity_table <- read_csv(
+  "assignments/assignment04-polyglot/submission/parity-table.csv",
+  show_col_types = FALSE
+)
+parity_table
+```
+
+The detailed rounded values and corresponding pandas results are recorded in `parity-table.csv`. The Python notebook uses pandas' sample standard deviation (`ddof=1`), matching R's `sd()`.
+
+## AI-use note
+
+AI assisted with drafting the R and pandas workflows and identifying translation checks. 
