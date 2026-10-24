@@ -1,0 +1,112 @@
+---
+format:
+  html:
+    embed-resources: true
+---
+
+# Visual audit and revision
+
+## Plot question
+
+How does mean BMI differ across NHANES cycles for adults age 20-80 in each income group in the classroom NHANES equity dataset?
+
+## Setup
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+candidate_paths <- c(
+  "examples/nhanes-equity/data/nhanes_equity_v6.csv",
+  "../../examples/nhanes-equity/data/nhanes_equity_v6.csv",
+  "../../../examples/nhanes-equity/data/nhanes_equity_v6.csv"
+)
+
+data_path <- candidate_paths[file.exists(candidate_paths)][1]
+if (is.na(data_path)) {
+  stop("Could not find examples/nhanes-equity/data/nhanes_equity_v6.csv")
+}
+
+nhanes <- read_csv(data_path, show_col_types = FALSE)
+```
+
+## Data used for the final figure
+
+```{r}
+#| label: final-summary
+plot_data <- nhanes |>
+  filter(
+    Age >= 20,
+    Age <= 80,
+    !is.na(BMI),
+    !is.na(IncomeGroup),
+    !is.na(Cycle)
+  ) |>
+  group_by(Cycle, IncomeGroup) |>
+  summarise(
+    mean_bmi = mean(BMI),
+    n = n(),
+    .groups = "drop"
+  ) |>
+  mutate(Cycle = factor(Cycle, levels = sort(unique(Cycle))))
+
+plot_data
+```
+
+## Corrected plot
+
+```{r}
+#| label: corrected-plot
+#| fig-width: 9
+#| fig-height: 6
+final_plot <- ggplot(
+  plot_data,
+  aes(x = Cycle, y = mean_bmi, color = IncomeGroup, group = IncomeGroup)
+) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2.5) +
+  scale_color_brewer(palette = "Set2") +
+  scale_y_continuous(
+    limits = c(26, 31.5),
+    breaks = seq(26, 31, by = 1)
+  ) +
+  labs(
+    title = "Mean BMI by income group across NHANES cycles",
+    subtitle = "Adults age 20-80 in the classroom NHANES equity dataset",
+    x = "NHANES cycle",
+    y = "Mean BMI",
+    color = "Income group",
+    caption = "Descriptive, unweighted classroom summary. Missing BMI, income group, and cycle values were excluded."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom",
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0.5, size = 10, lineheight = 1.2, margin = margin(t = 12)),
+    plot.margin = margin(t = 10, r = 10, b = 22, l = 10)
+  )
+
+final_plot
+
+ggsave(
+  file.path("assignments", "assignment05-visualization", "submission", "corrected-plot.png"),
+  final_plot,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+## Why the revision is more honest
+
+The original flawed version used a clipped y-axis and a causal title, which overstated the size of the difference and implied a stronger conclusion than the descriptive summary can support. The revised version keeps the full BMI range in view, uses a neutral title, and reports the analysis as a descriptive, unweighted classroom comparison. The figure still shows the clear pattern that lower-income adults have higher mean BMI than higher-income adults across almost every cycle, but it does not present that pattern as proof of a causal relationship.
+
+## Final caption
+
+Descriptive, unweighted classroom summary. Mean BMI among adults age 20-80 is shown by NHANES cycle and income group in the prepared NHANES equity dataset (source: examples/nhanes-equity/data/nhanes_equity_v6.csv). Missing BMI, income group, and cycle values were excluded; no survey weights were applied, so this is a descriptive comparison rather than a weighted national estimate or causal analysis.
