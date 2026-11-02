@@ -1,0 +1,127 @@
+---
+title: "Assignment 6: NHANES Equity EDA and AI Audit"
+format:
+  html:
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Question and data
+
+This descriptive analysis summarizes BMI and age by `IncomeGroup` in the
+prepared NHANES Health Equity classroom snapshot. The CSV is loaded from a
+relative repository path so the analysis can be rerun in a fresh Codespace.
+
+```{r}
+#| label: setup
+library(readr)
+library(dplyr)
+library(knitr)
+
+# AI prompt: Help structure a rerunnable relative-path EDA for the supplied CSV.
+# Verified: The path exists from the repository root, and these variables are
+# present with numeric Age and BMI columns.
+data_path <- "examples/nhanes-equity/data/nhanes_equity_v6.csv"
+if (!file.exists(data_path)) {
+  stop("Expected dataset was not found at: ", data_path)
+}
+
+nhanes <- read_csv(data_path, show_col_types = FALSE)
+```
+
+## Analysis cohort
+
+The intended cohort is adults ages 20 through 80, inclusive. The age filter is
+applied before any summary statistics. Missing values are not silently treated
+as zeros; the missingness report below is produced first, and records missing
+`BMI`, `Age`, or `IncomeGroup` are excluded only for the corresponding complete
+case Table 1.
+
+```{r}
+#| label: cohort
+# AI prompt: Verify that the required age range is inclusive and that exclusions
+# are explicit before the descriptive summary.
+# Verified: `between(Age, 20, 80)` includes both endpoints; the later filter
+# excludes only variables required by Table 1.
+cohort <- nhanes |>
+  filter(between(Age, 20, 80))
+
+tibble(
+  dataset = c("Full CSV", "Age 20-80 cohort"),
+  n = c(nrow(nhanes), nrow(cohort))
+) |>
+  kable(col.names = c("Stage", "N"))
+```
+
+## Missingness
+
+Missingness is checked for every variable used in the cohort definition or
+Table 1 before interpreting group summaries.
+
+```{r}
+#| label: missingness
+key_variables <- c("Age", "BMI", "IncomeGroup")
+
+missingness <- tibble(
+  variable = key_variables,
+  missing_n = vapply(nhanes[key_variables], function(x) sum(is.na(x)), integer(1)),
+  total_n = nrow(nhanes)
+) |>
+  mutate(missing_percent = round(100 * missing_n / total_n, 1))
+
+kable(
+  missingness,
+  col.names = c("Variable", "Missing N", "Total N", "Missing (%)"),
+  caption = "Missingness in the full prepared CSV"
+)
+```
+
+## Table 1-style descriptive summary
+
+The Table 1 uses complete records for `Age`, `BMI`, and `IncomeGroup` within
+the age-defined cohort. `N` is the number of records contributing to both
+means. Standard deviation is calculated with `sd()`, not variance.
+
+```{r}
+#| label: table1
+# AI prompt: Draft a Table 1 grouped by IncomeGroup with N and mean (SD).
+# Verified: I checked the output against the complete-case filter and confirmed
+# that the parenthesized values are standard deviations calculated by `sd()`.
+table1_data <- cohort |>
+  filter(
+    !is.na(Age),
+    !is.na(BMI),
+    !is.na(IncomeGroup)
+  )
+
+table1 <- table1_data |>
+  group_by(IncomeGroup) |>
+  summarise(
+    N = n(),
+    `BMI, mean (SD)` = sprintf("%.1f (%.1f)", mean(BMI), sd(BMI)),
+    `Age, mean (SD)` = sprintf("%.1f (%.1f)", mean(Age), sd(Age)),
+    .groups = "drop"
+  ) |>
+  arrange(IncomeGroup)
+
+kable(
+  table1,
+  caption = "Table 1. Descriptive characteristics by income group"
+)
+
+write_csv(table1, "assignments/assignment06-eda-ai-audit/submission/table1.csv")
+```
+
+## Methods note
+
+We analyzed the prepared NHANES Health Equity classroom CSV snapshot and
+defined the cohort as records with age 20–80 inclusive. We reported missingness
+for age, BMI, and income group before excluding records missing any of those
+variables from the Table 1 summary. We summarized the complete-case cohort
+with N, BMI mean (SD), and age mean (SD) by `IncomeGroup` using unweighted
+descriptive statistics. This analysis describes the prepared classroom
+dataset only and is not a causal analysis or a population-representative
+estimate.
