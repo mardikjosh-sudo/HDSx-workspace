@@ -1,0 +1,1 @@
+AI helped draft the neutral interpretation. I checked the wording against the actual NHANES classroom data, verified the income-group labels and filtering logic, and kept the final interpretation descriptive and non-causal before rendering the product.

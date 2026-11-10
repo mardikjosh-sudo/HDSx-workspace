@@ -1,0 +1,1 @@
+This dashboard is a descriptive, unweighted classroom summary. It does not account for NHANES survey design or infer population-level effects, and it should not be used to claim that income causes differences in BMI.

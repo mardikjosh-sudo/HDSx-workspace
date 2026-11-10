@@ -1,0 +1,1 @@
+This preview contains only aggregated mean BMI values by NHANES cycle, not row-level records. The wording avoids small-cell overclaiming and does not suggest that income drives BMI or that the analysis is causal.

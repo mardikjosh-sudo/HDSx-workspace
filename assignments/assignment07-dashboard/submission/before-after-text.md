@@ -1,0 +1,3 @@
+- Original: `selected_income <- "Low Income (<1.3)"` and a generic plot title of `Mean BMI for ...`.
+- Revised: `selected_income <- "Middle Income"` and `Mean BMI among Middle Income adults`, which is more audience-facing and easier to interpret in a briefing.
+- The interpretation was changed from a bare chart description to a descriptive trend statement that explicitly notes the dashboard is not causal.

@@ -1,0 +1,3 @@
+- Date tested: 2026-11-10.
+- Command used: `quarto render assignments/assignment07-dashboard/submission/dashboard.qmd` from the repository root.
+- Result: the Quarto document rendered successfully and produced the HTML dashboard preview with the updated middle-income control and matching summary table and plot.

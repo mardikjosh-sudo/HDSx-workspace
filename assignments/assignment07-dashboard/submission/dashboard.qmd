@@ -1,0 +1,104 @@
+---
+format:
+  html:
+    embed-resources: true
+---
+
+# Mean BMI by NHANES cycle for middle-income adults
+
+This dashboard summarizes the average BMI for adults age 20-80 in the prepared classroom NHANES equity dataset. The selected income group can be changed to compare patterns across the available groups without changing the underlying analysis.
+
+## Setup
+
+```{r}
+#| label: dashboard-setup
+#| message: false
+#| warning: false
+library(tidyverse)
+library(knitr)
+
+candidate_paths <- c(
+  "examples/nhanes-equity/data/nhanes_equity_v6.csv",
+  "../../examples/nhanes-equity/data/nhanes_equity_v6.csv"
+)
+
+data_path <- candidate_paths[file.exists(candidate_paths)][1]
+if (is.na(data_path)) {
+  stop("Could not find examples/nhanes-equity/data/nhanes_equity_v6.csv")
+}
+
+nhanes <- read_csv(data_path, show_col_types = FALSE)
+```
+
+## Control
+
+In a Shiny app, this would be a dropdown menu. In this static dashboard, the control is set directly to one income group and the figures update when the value changes.
+
+```{r}
+#| label: dashboard-control
+available_income_groups <- sort(unique(na.omit(nhanes$IncomeGroup)))
+selected_income <- "Middle Income"
+
+if (!selected_income %in% available_income_groups) {
+  selected_income <- available_income_groups[1]
+}
+
+selected_income
+```
+
+## Summary
+
+```{r}
+#| label: dashboard-summary
+#| results: asis
+
+dashboard_summary <- nhanes |>
+  filter(
+    Age >= 20,
+    Age <= 80,
+    IncomeGroup == selected_income,
+    !is.na(BMI),
+    !is.na(Cycle)
+  ) |>
+  group_by(Cycle) |>
+  summarise(
+    n = n(),
+    mean_bmi = round(mean(BMI), 1),
+    .groups = "drop"
+  )
+
+kable(dashboard_summary, col.names = c("NHANES cycle", "n", "Mean BMI"))
+```
+
+## Visualization
+
+```{r}
+#| label: dashboard-plot
+
+ggplot(dashboard_summary, aes(x = Cycle, y = mean_bmi, group = 1)) +
+  geom_line(linewidth = 0.8, color = "#2f6f73") +
+  geom_point(size = 2.4, color = "#2f6f73") +
+  labs(
+    title = paste("Mean BMI among", selected_income, "adults"),
+    subtitle = "Adults age 20-80 in the prepared NHANES Health Equity classroom dataset",
+    x = "NHANES cycle",
+    y = "Mean BMI (kg/m²)",
+    caption = "Descriptive, unweighted classroom summary. Adults age 20-80 were included; missing BMI, income group, cycle, and out-of-range ages were excluded."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Interpretation
+
+For the selected income group, the time series shows how mean BMI changed across the available NHANES cycles in this prepared classroom dataset. The pattern is descriptive rather than causal: it helps a public-health analyst ask whether a change appears meaningful over time, while keeping the result grounded in the unweighted sample used for teaching.
+
+## Limitation
+
+This dashboard is descriptive and unweighted. It does not account for NHANES survey design, cannot estimate national prevalence, and should not be used to infer that income causes differences in BMI.
+
+## Privacy-safe publishing
+
+- Use aggregate means only, not row-level records.
+- Avoid small-cell interpretations when the count is low.
+- State clearly that results are descriptive, unweighted, and not causal.

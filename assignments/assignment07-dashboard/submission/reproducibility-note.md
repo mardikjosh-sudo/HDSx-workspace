@@ -1,0 +1,1 @@
+The dashboard was run in GitHub Codespaces by opening the repository root and rendering the Quarto document with `quarto render assignments/assignment07-dashboard/submission/dashboard.qmd`. This uses the prepared classroom CSV in the repo and keeps the workflow reproducible from the repository root without adding new data or changing the analytic logic.
