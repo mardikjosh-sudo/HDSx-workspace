@@ -1,0 +1,39 @@
+---
+title: "BMI by Income Group"
+subtitle: "A three-slide knowledge translation story"
+author: "Josh Mardik"
+format:
+  revealjs:
+    slide-number: true
+    embed-resources: true
+bibliography: ../../../references.bib
+---
+
+## Question And Audience
+
+**Audience:** Public-health analysts and partners planning a short briefing.
+
+**Question:** How does mean BMI differ by income group among adults age 20-80 in the prepared classroom NHANES equity dataset?
+
+**Why it matters:** The result gives a concise starting point for deciding whether a broader, survey-weighted analysis or community discussion is warranted.
+
+## Evidence
+
+| Income group | N | Mean BMI (SD) |
+|---|---:|---:|
+| Low Income (<1.3) | 15,293 | 29.4 (7.5) |
+| Middle Income | 19,228 | 29.3 (7.0) |
+| High Income (>3.5) | 16,330 | 28.6 (6.3) |
+
+**Finding:** Low- and middle-income groups have nearly the same mean BMI; the high-income group is 0.7-0.8 kg/m2 lower.
+
+**Source:** Assignment 6 Table 1; `assignments/assignment06-eda-ai-audit/submission/table1.csv`.
+The source for the classroom example is CDC/NCHS NHANES public-use data [@cdc-nhanes].
+
+## Limitation And Next Step
+
+**Limitation:** The summary is descriptive, unweighted, complete-case, and limited to the prepared classroom dataset. It does not establish population differences or causality.
+
+**Next step:** Discuss whether a survey-weighted, covariate-adjusted analysis is needed and identify a specific public-health question for follow-up.
+
+**AI-use note:** AI helped organize this presentation from verified prior work. I checked the groups, sample sizes, BMI means and standard deviations against the submitted Table 1 CSV before publishing.
